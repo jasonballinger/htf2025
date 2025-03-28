@@ -1,58 +1,95 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useState, useEffect, useRef } from "react";
+import { initWebRTC } from "./webrtcUtils";
 import "./App.css";
 
-import WebSocket from "ws";
-
-const url =
-    "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17";
-const ws = new WebSocket(url, {
-    headers: {
-        Authorization:
-            "Bearer " +
-            process.env.OPENAI_KEY,
-        "OpenAI-Beta": "realtime=v1",
-    },
-});
-
-ws.on("open", function open() {
-    console.log("Connected to server.");
-});
-
-ws.on("message", function incoming(message) {
-    console.log(JSON.parse(message.toString()));
-});
-
 function App() {
-    const [count, setCount] = useState(0);
+    const [sessionId, setSessionId] = useState<string>("");
+    const [peerConnection, setPeerConnection] =
+        useState<RTCPeerConnection | null>(null);
+    const [isRecording, setIsRecording] = useState<boolean>(false); // Track recording state
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null); // Ref for MediaRecorder
+
+    useEffect(() => {
+        async function initializeWebRTC() {
+            try {
+                const pc = await initWebRTC(setSessionId);
+                setPeerConnection(pc); // Store the peer connection in state
+            } catch (error) {
+                console.error("Error initializing WebRTC:", error);
+            }
+        }
+
+        initializeWebRTC();
+    }, []);
+
+    // Function to start recording
+    const startRecording = async () => {
+        if (!peerConnection) {
+            console.error("Peer connection is not ready.");
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+
+            mediaRecorder.ondataavailable = async (event) => {
+                if (event.data.size > 0) {
+                    console.log("Recording complete, sending audio...");
+                    await sendAudioToPeer(event.data); // Send the audio blob to the peer
+                }
+            };
+
+            mediaRecorder.start(); // Start recording
+            setIsRecording(true); // Update recording state
+            console.log("Recording started...");
+        } catch (error) {
+            console.error("Error starting recording:", error);
+        }
+    };
+
+    // Function to stop recording
+    const stopRecording = () => {
+        const mediaRecorder = mediaRecorderRef.current;
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop(); // Stop recording
+            setIsRecording(false); // Update recording state
+            console.log("Recording stopped...");
+        }
+    };
+
+    // Function to send audio to the peer
+    const sendAudioToPeer = async (audioBlob: Blob) => {
+        if (!peerConnection) {
+            console.error("Peer connection is not ready.");
+            return;
+        }
+
+        const audioContext = new AudioContext();
+        const audioBuffer = await audioBlob.arrayBuffer();
+        const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
+
+        const source = audioContext.createBufferSource();
+        source.buffer = decodedAudio;
+
+        const destination = audioContext.createMediaStreamDestination();
+        source.connect(destination);
+        source.start();
+
+        const track = destination.stream.getAudioTracks()[0];
+        peerConnection.addTrack(track); // Add the audio track to the peer connection
+    };
 
     return (
         <>
-            <div>
-                <a href="https://vite.dev" target="_blank">
-                    <img src={viteLogo} className="logo" alt="Vite logo" />
-                </a>
-                <a href="https://react.dev" target="_blank">
-                    <img
-                        src={reactLogo}
-                        className="logo react"
-                        alt="React logo"
-                    />
-                </a>
-            </div>
-            <h1>Vite + React</h1>
-            <div className="card">
-                <button onClick={() => setCount((count) => count + 1)}>
-                    count is {count}
-                </button>
-                <p>
-                    Edit <code>src/App.tsx</code> and save to test HMR
-                </p>
-            </div>
-            <p className="read-the-docs">
-                Click on the Vite and React logos to learn more
-            </p>
+            <p>Session id: {sessionId}</p>
+            {peerConnection && <p>Peer connection is ready!</p>}
+            <button onClick={isRecording ? stopRecording : startRecording}>
+                {isRecording ? "Stop Recording" : "Start Recording"}
+            </button>
         </>
     );
 }
