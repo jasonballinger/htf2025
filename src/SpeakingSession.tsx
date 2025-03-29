@@ -13,9 +13,9 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
     const peerConnection = useRef<RTCPeerConnection | null>(null);
     const audioElement = useRef<HTMLAudioElement | null>(null);
 
-    const finalPrompt = `${scenario.scenario.basePrompt} Remain aware of cultural norms in the countries where ${scenario.options.language} is spoken, and practice them. Only speak in ${scenario.options.language}, at a vocabulary level that a ${scenario.options.difficulty} speaker could understand. If you are spoken to in a language other than ${scenario.options.language}, act confused and say that you cannot understand what they are saying in ${scenario.options.language}, and ask the user to speak ${scenario.options.language}. If they repeat the same question in a language other than ${scenario.options.language}, respond in English and say that you cannot understand them. After this, return to speaking ${scenario.options.language} unless they continue to respond in a non-${scenario.options.language} langugae.`;
+    const finalPrompt = `You will be given some instructions. In addition to following these instructions, remain adaptable to the conversation. Occasionally provide the user with some resources relative to the topic of the conversation. Here are the instructions: ${scenario.scenario.basePrompt} Remain aware of cultural norms in the countries where ${scenario.options.language} is spoken, and practice them. Only speak in ${scenario.options.language}, at a vocabulary level that a ${scenario.options.difficulty} speaker could understand. If you are spoken to in a language other than ${scenario.options.language}, act confused and say that you cannot understand what they are saying in ${scenario.options.language}, and ask the user to speak ${scenario.options.language}. If they repeat the same question in a language other than ${scenario.options.language}, respond in English and say that you cannot understand them. After this, return to speaking ${scenario.options.language} unless they continue to respond in a non-${scenario.options.language} langugae.`;
 
-    async function startSession({ instructions }: { instructions: string }) {
+    async function startSession() {
         // Get a session token for OpenAI Realtime API
         const tokenResponse = await fetch("http://localhost:3001/session", {
             method: "POST",
@@ -172,9 +172,7 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
                         stopSession();
                     } else {
                         try {
-                            await startSession({
-                                instructions: "You are a helpful AI assistant.",
-                            });
+                            await startSession();
                         } catch (error) {
                             console.error("Failed to start session:", error);
                         }
