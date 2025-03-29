@@ -1,97 +1,192 @@
-import { useState, useEffect, useRef } from "react";
-import { initWebRTC } from "./webrtcUtils";
 import "./App.css";
+import { useState, useRef, useEffect } from "react";
 
-function App() {
-    const [sessionId, setSessionId] = useState<string>("");
-    const [peerConnection, setPeerConnection] =
-        useState<RTCPeerConnection | null>(null);
-    const [isRecording, setIsRecording] = useState<boolean>(false); // Track recording state
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null); // Ref for MediaRecorder
+export default function App() {
+    // TODO: need to handle microphone permissions
+    const [isSessionActive, setIsSessionActive] = useState(false);
+    const [events, setEvents] = useState<any[]>([]);
+    const [dataChannel, setDataChannel] = useState<RTCDataChannel | null>(null);
+    const [isMuted, setIsMuted] = useState(false);
+    const audioTrack = useRef<MediaStreamTrack | null>(null);
+    const peerConnection = useRef<RTCPeerConnection | null>(null);
+    const audioElement = useRef<HTMLAudioElement | null>(null);
 
-    useEffect(() => {
-        async function initializeWebRTC() {
-            try {
-                const pc = await initWebRTC(setSessionId);
-                setPeerConnection(pc); // Store the peer connection in state
-            } catch (error) {
-                console.error("Error initializing WebRTC:", error);
+    async function startSession({ instructions }: { instructions: string }) {
+        // Get a session token for OpenAI Realtime API
+        const tokenResponse = await fetch("http://localhost:3001/session", {
+            method: "POST",
+            body: JSON.stringify({ instructions }),
+        });
+        const data = await tokenResponse.json();
+        const EPHEMERAL_KEY = data.client_secret.value;
+
+        // Create a peer connection
+        const pc = new RTCPeerConnection();
+
+        // Set up to play remote audio from the model
+        audioElement.current = document.createElement("audio");
+        audioElement.current.autoplay = true;
+        pc.ontrack = (e) => {
+            if (audioElement.current) {
+                audioElement.current.srcObject = e.streams[0];
             }
+        };
+
+        // Add local audio track for microphone input in the browser
+        const ms = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+        });
+        const track = ms.getTracks()[0];
+        audioTrack.current = track;  // Store reference to track
+        pc.addTrack(track);
+
+        // Set up data channel for sending and receiving events
+        const dc = pc.createDataChannel("oai-events");
+        setDataChannel(dc);
+
+        // Start the session using the Session Description Protocol (SDP)
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const baseUrl = "https://api.openai.com/v1/realtime";
+        const model = "gpt-4o-realtime-preview-2024-12-17";
+        const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+            method: "POST",
+            body: offer.sdp,
+            headers: {
+                Authorization: `Bearer ${EPHEMERAL_KEY}`,
+                "Content-Type": "application/sdp",
+            },
+        });
+
+        const answer: RTCSessionDescriptionInit = {
+            type: "answer",
+            sdp: await sdpResponse.text(),
+        };
+        await pc.setRemoteDescription(answer);
+
+        peerConnection.current = pc;
+    }
+
+    // Stop current session, clean up peer connection and data channel
+    function stopSession() {
+        if (dataChannel) {
+            dataChannel.close();
         }
 
-        initializeWebRTC();
-    }, []);
-
-    // Function to start recording
-    const startRecording = async () => {
-        if (!peerConnection) {
-            console.error("Peer connection is not ready.");
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-            });
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-
-            mediaRecorder.ondataavailable = async (event) => {
-                if (event.data.size > 0) {
-                    console.log("Recording complete, sending audio...");
-                    await sendAudioToPeer(event.data); // Send the audio blob to the peer
+        if (peerConnection.current) {
+            peerConnection.current.getSenders().forEach((sender) => {
+                if (sender.track) {
+                    sender.track.stop();
                 }
-            };
+            });
 
-            mediaRecorder.start(); // Start recording
-            setIsRecording(true); // Update recording state
-            console.log("Recording started...");
-        } catch (error) {
-            console.error("Error starting recording:", error);
-        }
-    };
-
-    // Function to stop recording
-    const stopRecording = () => {
-        const mediaRecorder = mediaRecorderRef.current;
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
-            mediaRecorder.stop(); // Stop recording
-            setIsRecording(false); // Update recording state
-            console.log("Recording stopped...");
-        }
-    };
-
-    // Function to send audio to the peer
-    const sendAudioToPeer = async (audioBlob: Blob) => {
-        if (!peerConnection) {
-            console.error("Peer connection is not ready.");
-            return;
+            peerConnection.current.close();
         }
 
-        const audioContext = new AudioContext();
-        const audioBuffer = await audioBlob.arrayBuffer();
-        const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
+        setIsSessionActive(false);
+        setDataChannel(null);
+        peerConnection.current = null;
+    }
 
-        const source = audioContext.createBufferSource();
-        source.buffer = decodedAudio;
+    // Send a message to the model
+    function sendClientEvent(message: any) {
+        if (dataChannel) {
+            const timestamp = new Date().toLocaleTimeString();
+            message.event_id = message.event_id || crypto.randomUUID();
 
-        const destination = audioContext.createMediaStreamDestination();
-        source.connect(destination);
-        source.start();
+            // send event before setting timestamp since the backend peer doesn't expect this field
+            dataChannel.send(JSON.stringify(message));
 
-        const track = destination.stream.getAudioTracks()[0];
-        peerConnection.addTrack(track); // Add the audio track to the peer connection
+            // if guard just in case the timestamp exists by miracle
+            if (!message.timestamp) {
+                message.timestamp = timestamp;
+            }
+            setEvents((prev) => [message, ...prev]);
+        } else {
+            console.error(
+                "Failed to send message - no data channel available",
+                message
+            );
+        }
+    }
+
+    // Send a text message to the model
+    function sendTextMessage(message: any) {
+        const event = {
+            type: "conversation.item.create",
+            item: {
+                type: "message",
+                role: "user",
+                content: [
+                    {
+                        type: "input_text",
+                        text: message,
+                    },
+                ],
+            },
+        };
+
+        sendClientEvent(event);
+        sendClientEvent({ type: "response.create" });
+    }
+
+    // Attach event listeners to the data channel when a new one is created
+    useEffect(() => {
+        if (dataChannel) {
+            // Append new server events to the list
+            dataChannel.addEventListener("message", (e) => {
+                const event = JSON.parse(e.data);
+                if (!event.timestamp) {
+                    event.timestamp = new Date().toLocaleTimeString();
+                }
+
+                setEvents((prev) => [event, ...prev]);
+            });
+
+            // Set session active when the data channel is opened
+            dataChannel.addEventListener("open", () => {
+                setIsSessionActive(true);
+                setEvents([]);
+            });
+        }
+    }, [dataChannel]);
+
+    // Add function to toggle mute
+    const toggleMute = () => {
+        if (audioTrack.current) {
+            audioTrack.current.enabled = !audioTrack.current.enabled;
+            setIsMuted(!isMuted);
+        }
     };
 
     return (
         <>
-            <p>Session id: {sessionId}</p>
-            {peerConnection && <p>Peer connection is ready!</p>}
-            <button onClick={isRecording ? stopRecording : startRecording}>
-                {isRecording ? "Stop Recording" : "Start Recording"}
+            <button
+                onClick={async () => {
+                    if (isSessionActive) {
+                        stopSession();
+                    } else {
+                        try {
+                            await startSession({
+                                instructions: "You are a helpful AI assistant.",
+                            });
+                        } catch (error) {
+                            console.error("Failed to start session:", error);
+                        }
+                    }
+                }}
+            >
+                {isSessionActive ? "Stop Session" : "Start Session"}
             </button>
+            
+            {/* Add mute button */}
+            {isSessionActive && (
+                <button onClick={toggleMute}>
+                    {isMuted ? "Unmute" : "Mute"} Microphone
+                </button>
+            )}
+            <p>hello!</p>
         </>
     );
 }
-
-export default App;
