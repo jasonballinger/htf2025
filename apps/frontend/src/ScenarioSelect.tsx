@@ -56,20 +56,20 @@ export interface Scenario {
 }
 
 const scenarios: ScenarioBase[] = [
-    {
-        title: "Renting an Apartment",
-        description:
-            "Talk to a landlord about renting an apartment. Discuss details such as price, apartment type, location, and any other relevant information.",
-        basePrompt:
-            "You are a landlord. The user is an American student studying abroad in your country, and they are seeking to rent an apartment. Your task is to have a natural conversation with the user about the apartments you have for rent, details such as price and apartment type, and so on, responding to what they say in an appropriate manner. The conversation should continue until you or I indicate through our speech that the conversation has come to an end.",
-    },
-    {
-        title: "Calling Emergency Services",
-        description:
-            "Call the local emergency number to request assistance or report a crime. Describe the situation and what you need, cooperating with dispatcher instructions.",
-        basePrompt:
-            "You are speaking with an American student studying abroad in your country. They are experiencing a medical Emergency. You are playing the role of a helpful, serious dispatcher communicating with the student who has found a person unconscious on the ground. First, you will provide the student with the number for Emergency services in your country. Then, the student will explain their situation.",
-    },
+    // {
+    //     title: "Renting an Apartment",
+    //     description:
+    //         "Talk to a landlord about renting an apartment. Discuss details such as price, apartment type, location, and any other relevant information.",
+    //     basePrompt:
+    //         "You are a landlord. The user is an American student studying abroad in your country, and they are seeking to rent an apartment. Your task is to have a natural conversation with the user about the apartments you have for rent, details such as price and apartment type, and so on, responding to what they say in an appropriate manner. The conversation should continue until you or I indicate through our speech that the conversation has come to an end.",
+    // },
+    // {
+    //     title: "Calling Emergency Services",
+    //     description:
+    //         "Call the local emergency number to request assistance or report a crime. Describe the situation and what you need, cooperating with dispatcher instructions.",
+    //     basePrompt:
+    //         "You are speaking with an American student studying abroad in your country. They are experiencing a medical Emergency. You are playing the role of a helpful, serious dispatcher communicating with the student who has found a person unconscious on the ground. First, you will provide the student with the number for Emergency services in your country. Then, the student will explain their situation.",
+    // },
     {
         title: "Ordering Food",
         description:

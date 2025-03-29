@@ -1,6 +1,8 @@
-import "./App.css";
+import "./index.css";
 import { useState, useRef, useEffect } from "react";
 import { Scenario } from "./ScenarioSelect";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 
 export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
     // TODO: need to handle microphone permissions
@@ -8,6 +10,7 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
     const [events, setEvents] = useState<any[]>([]);
     const [dataChannel, setDataChannel] = useState<RTCDataChannel | null>(null);
     const [isMuted, setIsMuted] = useState(false);
+    const [feedback, setFeedback] = useState<string>("");
 
     const audioTrack = useRef<MediaStreamTrack | null>(null);
     const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -136,6 +139,20 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
         }
     }
 
+    function handleEvent(e: any) {
+        const serverEvent = JSON.parse(e.data);
+        console.log(serverEvent);
+        if (serverEvent.type === "response.text.done") {
+            // Store the feedback in state
+            setFeedback(serverEvent.text);
+            // Remove the event listener to avoid duplicate handling
+            if (dataChannel) {
+                dataChannel.removeEventListener("message", handleEvent);
+            }
+        }
+        if (serverEvent.type === "response.text.delta") console.log(serverEvent.response.output[0].content);
+    }
+
     // Send a text message to the model
     // function sendTextMessage(message: any) {
     //     const event = {
@@ -158,30 +175,31 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
 
     function getSessionFeedback() {
         const event = {
-            type: "response.create",
+            type: "conversation.item.create",  // Changed event type to match API
             item: {
                 type: "message",
                 role: "user",
                 content: [
                     {
                         type: "input_text",
-                        text: "Can you please provide feedback on my performance?",
+                        text: "Provide the user with feedback on their performance.",
                     },
                 ],
             },
-            response: {
-                modalities: ["text"],
-            },
         };
 
-        sendClientEvent(event);
-        if (dataChannel) {
-            dataChannel.send(JSON.stringify(event));
-        } else {
-            console.error(
-                "Failed to send feedback request - no data channel available"
-            );
+        dataChannel!.send(JSON.stringify(event));
+
+        const responseEvent = {
+            type: "response.create",
+            response: {
+                modalities: ["text"],
+            }
         }
+
+        dataChannel!.send(JSON.stringify(responseEvent));
+        
+        dataChannel!.addEventListener("message", handleEvent);
     }
 
     // Attach event listeners to the data channel when a new one is created
@@ -214,31 +232,48 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
     };
 
     return (
-        <>
-            <button
-                onClick={async () => {
-                    if (isSessionActive) {
-                        // getSessionFeedback();
-                        stopSession();
-                    } else {
-                        try {
-                            await startSession();
-                        } catch (error) {
-                            console.error("Failed to start session:", error);
+        <div>
+            {/* Add feedback display */}
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 flex flex-row space-x-3 items-center justify-center">
+                <p>Instructions</p>
+                {/* <Card>
+                    <CardHeader><CardTitle>Feedback</CardTitle></CardHeader>
+                    <CardContent><p>{feedback}</p></CardContent>
+                </Card> */}
+                <p>Feedback: {feedback}</p>
+            </div>
+            
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex flex-row space-x-3 items-center justify-center">
+                <Button
+                    variant="outline"
+                    onClick={async () => {
+                        if (isSessionActive) {
+                            stopSession();
+                        } else {
+                            try {
+                                await startSession();
+                            } catch (error) {
+                                console.error("Failed to start session:", error);
+                            }
                         }
-                    }
-                }}
-            >
-                {isSessionActive ? "Stop Session" : "Start Session"}
-            </button>
+                    }}
+                >
+                    {isSessionActive ? "Stop Session" : "Start Session"}
+                </Button>
 
-            {/* Add mute button */}
-            {isSessionActive && (
-                <button onClick={toggleMute}>
-                    {isMuted ? "Unmute" : "Mute"} Microphone
-                </button>
-            )}
-            <p>hello!</p>
-        </>
+                {/* Add feedback button */}
+                {isSessionActive && (
+                    <Button variant="outline" onClick={getSessionFeedback}>
+                        Get Feedback
+                    </Button>
+                )}
+
+                {isSessionActive && (
+                    <Button variant="outline" onClick={toggleMute}>
+                        {isMuted ? "Unmute" : "Mute"} Microphone
+                    </Button>
+                )}
+            </div>
+        </div>
     );
 }
