@@ -137,28 +137,52 @@ export default function SpeakingSession({ scenario }: { scenario: Scenario }) {
     }
 
     // Send a text message to the model
-    function sendTextMessage(message: any) {
+    // function sendTextMessage(message: any) {
+    //     const event = {
+    //         type: "conversation.item.create",
+    //         item: {
+    //             type: "message",
+    //             role: "user",
+    //             content: [
+    //                 {
+    //                     type: "input_text",
+    //                     text: message,
+    //                 },
+    //             ],
+    //         },
+    //     };
+
+    //     sendClientEvent(event);
+    //     sendClientEvent({ type: "response.create" });
+    // }
+
+    function getSessionFeedback() {
         const event = {
-            type: "conversation.item.create",
+            type: "response.create",
             item: {
                 type: "message",
                 role: "user",
                 content: [
                     {
                         type: "input_text",
-                        text: message,
+                        text: "Can you please provide feedback on my performance?",
                     },
                 ],
+            },
+            response: {
+                modalities: ["text"],
             },
         };
 
         sendClientEvent(event);
-        sendClientEvent({ type: "response.create" });
+        if (dataChannel) {
+            dataChannel.send(JSON.stringify(event));
+        } else {
+            console.error(
+                "Failed to send feedback request - no data channel available"
+            );
+        }
     }
-
-    // function getSessionFeedback() {
-    //     sendTextMessage("Can you provide feedback on my performance?");
-    // }
 
     // Attach event listeners to the data channel when a new one is created
     useEffect(() => {

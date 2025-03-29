@@ -7,7 +7,7 @@ require("dotenv").config();
 
 app.get("/", (req, res) => {
     res.send("Hello World");
-})
+});
 
 // An endpoint which would work with the client code above - it returns
 // the contents of a REST API request to this protected endpoint
@@ -21,9 +21,7 @@ app.post("/session", async (req, res) => {
         body: JSON.stringify({
             model: "gpt-4o-realtime-preview-2024-12-17",
             voice: "verse",
-            // instructions: req.body.instructions
-            //     ? req.body.intsructions
-            //     : "You are a helpful assistant.",
+            instructions: req.body.instructions
         }),
     });
     const data = await r.json();
