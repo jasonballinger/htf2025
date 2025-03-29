@@ -59,8 +59,23 @@ const scenarios: ScenarioBase[] = [
     {
         title: "Renting an Apartment",
         description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-            basePrompt: ""
+            "Talk to a landlord about renting an apartment. Discuss details such as price, apartment type, location, and any other relevant information.",
+        basePrompt:
+            "You are a landlord. The user is an American student studying abroad in your country, and they are seeking to rent an apartment. Your task is to have a natural conversation with the user about the apartments you have for rent, details such as price and apartment type, and so on, responding to what they say in an appropriate manner. The conversation should continue until you or I indicate through our speech that the conversation has come to an end.",
+    },
+    {
+        title: "Calling Emergency Services",
+        description:
+            "Call the local emergency number to request assistance or report a crime. Describe the situation and what you need, cooperating with dispatcher instructions.",
+        basePrompt:
+            "You are speaking with an American student studying abroad in your country. They are experiencing a medical Emergency. You are playing the role of a helpful, serious dispatcher communicating with the student who has found a person unconscious on the ground. First, you will provide the student with the number for Emergency services in your country. Then, the student will explain their situation.",
+    },
+    {
+        title: "Ordering Food",
+        description:
+            "Place an order at a restaurant. You may ask about menu items, prices, etc. before placing your order.",
+        basePrompt:
+            "You are a waiter at a restaurant in your country. The user is an American student who has come to study abroad in your country, and has come to your restaurant to eat a meal. Your task is to be their waiter, having a natural conversation with them about what they would like to eat, prices, and other topics appropriate to a conversation with a restaurant customer. The conversation should continue until you or I indicate through our speech that the conversation has come to an end.",
     },
 ];
 
@@ -122,6 +137,21 @@ export default function ScenarioSelect({
                                     </SelectItem>
                                     <SelectItem value="Russian">
                                         🇷🇺 Russian
+                                    </SelectItem>
+                                    <SelectItem value="Persian/Farsi">
+                                        🇮🇷 Persian/Farsi
+                                    </SelectItem>
+                                    <SelectItem value="Spanish">
+                                        🇪🇸 Spanish
+                                    </SelectItem>
+                                    <SelectItem value="French">
+                                        🇫🇷 French
+                                    </SelectItem>
+                                    <SelectItem value="German">
+                                        🇩🇪 German
+                                    </SelectItem>
+                                    <SelectItem value="Portugese">
+                                        🇵🇹 Portugese
                                     </SelectItem>
                                 </SelectContent>
                             </Select>

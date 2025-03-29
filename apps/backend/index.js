@@ -2,6 +2,11 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 app.use(cors());
+require("dotenv").config();
+
+app.get("/", (req, res) => {
+    res.send("Hello World");
+})
 
 // An endpoint which would work with the client code above - it returns
 // the contents of a REST API request to this protected endpoint
@@ -15,6 +20,9 @@ app.post("/session", async (req, res) => {
         body: JSON.stringify({
             model: "gpt-4o-realtime-preview-2024-12-17",
             voice: "verse",
+            // instructions: req.body.instructions
+            //     ? req.body.intsructions
+            //     : "You are a helpful assistant.",
         }),
     });
     const data = await r.json();
@@ -23,5 +31,11 @@ app.post("/session", async (req, res) => {
     res.send(data);
 });
 
-app.listen(3001);
-console.log("started on http://localhost:3001");
+const port = 3001;
+
+app.listen(port);
+console.log(`started on http://localhost:${port}`);
+if (process.env.OPENAI_API_KEY === undefined) {
+    console.error("Please set the OPENAI_API_KEY environment variable");
+    process.exit(1);
+}
