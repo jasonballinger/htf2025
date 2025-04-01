@@ -1,84 +1,54 @@
-# Turborepo starter
+# DailySpeak
 
-This Turborepo starter is maintained by the Turborepo core team.
+Hack the Flagship 2025 - Team #3 - [Pitch Deck](https://docs.google.com/presentation/d/1hvJDu0g7-h4w9fnz6fUpDMGxk-fEdORRsglxp84uRZ4/edit?usp=sharing)
 
-## Using this example
+Jason Ballinger, William Bittner, Sydney Lenski, Isabel Metzdorff, Trevor Harms, Haasil Pujara
 
-Run the following command:
+## Notes
 
-```sh
-npx create-turbo@latest
-```
+The ordering food scenario is the only one that has been fully developed and tested. I recommend selecting this scenario when using the application.
 
-## What's inside?
+This project requires an OpenAI API Key to run, and utilizes the OpenAI Realtime API (beta). This may incur significant costs if used extensively. [Here are instructions](https://community.openai.com/t/how-to-set-billing-limits-and-restrict-model-usage-for-a-project-via-openai-api/1087771) on how to setup a **spend limit** in your OpenAI API Console.
 
-This Turborepo includes the following packages/apps:
+## Instructions
 
-### Apps and Packages
+0. Install git, npm/pnpm
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+    Download git [here](https://git-scm.com/downloads), and npm [here](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). This project is setup to use [pnpm](https://pnpm.io/installation), but it is by no means necessary. If you already have these installed you can skip this step.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+1. Clone repository
 
-### Utilities
+    Open a terminal window and run:
 
-This Turborepo has some additional tools already setup for you:
+    ```sh
+    git clone https://github.com/jasonballinger/htf2025.git
+    ```
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+2. Install dependencies
 
-### Build
+    1. First, move into the directory: `cd htf2025`
 
-To build all apps and packages, run the following command:
+    2. Then, install dependencies using `npm i` or `pnpm i`
 
-```
-cd my-turborepo
-pnpm build
-```
+3. Set environment variables
 
-### Develop
+    The server requires an OpenAI API key to run. [Here are instructions](https://arc.net/l/quote/hniitbjz) on how to obtain an OpenAI API key. Once you have obtained an OpenAI API key:
 
-To develop all apps and packages, run the following command:
+    1. Navigate to the backend folder: `cd apps/backend`
+    2. Create a new `.env` file
+    3. Set the environment variable: `OPENAI_API_KEY=<Your OpenAI API Key here>`
+    4. Save the `.env` file.
 
-```
-cd my-turborepo
-pnpm dev
-```
+4. Start development server
 
-### Remote Caching
+    1. Navigate back to root of the repository: `cd ../..` - This step is important so that you start both the frontend and backend applications simulatenously. If you don't navigate back you will only start the backend.
+    2. Start the development server by running `npm run dev` or `pnpm dev`
+    3. You should now be able to access the app in your browser at [http://localhost:5173](http://localhost:5173)
+    4. If you are encountering an error where the session is not starting, you may need to manually enable microphone permissions. This process varies by browser, but here is the process for Chrome or Chrome-based browsers:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+        1. Navigate to browser settings
+        2. Search **"permissions"**
+        3. Click **"Site settings"**
+        4. Under **Recent activity**, select **localhost**
+        5. Under **Microphone**, select **Allow**
+        6. Refresh the app, it should work now
