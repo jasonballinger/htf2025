@@ -12,11 +12,17 @@ This project requires an OpenAI API Key to run, and utilizes the OpenAI Realtime
 
 ## Instructions
 
-0. Install git, npm/pnpm
+0. Install git, npm, and pnpm
 
-    Download git [here](https://git-scm.com/downloads), and npm [here](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). This project is setup to use [pnpm](https://pnpm.io/installation), but it is by no means necessary. If you already have these installed you can skip this step.
+   Download git [here](https://git-scm.com/downloads), and npm [here](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
-1. Clone repository
+   This project is setup with pnpm, and the workspace structure does not always work properly when using npm. Once you have npm installed, open a terminal window and run:
+
+   ```sh
+   npm install -g pnpm@latest-10
+   ```
+
+2. Clone repository
 
     Open a terminal window and run:
 
@@ -24,13 +30,13 @@ This project requires an OpenAI API Key to run, and utilizes the OpenAI Realtime
     git clone https://github.com/jasonballinger/htf2025.git
     ```
 
-2. Install dependencies
+3. Install dependencies
 
     1. First, move into the directory: `cd htf2025`
 
     2. Then, install dependencies using `npm i` or `pnpm i`
 
-3. Set environment variables
+4. Set environment variables
 
     The server requires an OpenAI API key to run. [Here are instructions](https://arc.net/l/quote/hniitbjz) on how to obtain an OpenAI API key. Once you have obtained an OpenAI API key:
 
@@ -39,7 +45,7 @@ This project requires an OpenAI API Key to run, and utilizes the OpenAI Realtime
     3. Set the environment variable: `OPENAI_API_KEY=<Your OpenAI API Key here>`
     4. Save the `.env` file.
 
-4. Start development server
+5. Start development server
 
     1. Navigate back to root of the repository: `cd ../..` - This step is important so that you start both the frontend and backend applications simulatenously. If you don't navigate back you will only start the backend.
     2. Start the development server by running `npm run dev` or `pnpm dev`
